@@ -16,14 +16,20 @@ class Register(Resource):
         postedData = request.get_json()
 
         #Get the data
-        username = postedData["username"]
-        password = postedData["password"] #"123xyz"
+        username = postedData["username"] or None
+        password = postedData["password"] or None #"123xyz"
 
+        if not username or not password:
+            retJson = {
+                "status": 301,
+                "msg": "Enter Username and Password correctly"
+            }
+            return jsonify(retJson)
 
         hashed_pw = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())
 
         #Store username and pw into the database
-        users.insert({
+        users.insert_one({
             "Username": username,
             "Password": hashed_pw,
             "Sentence": "",
@@ -37,7 +43,7 @@ class Register(Resource):
         return jsonify(retJson)
 
 def verifyPw(username, password):
-    hashed_pw = users.find({
+    hashed_pw = users.find_one({
         "Username":username
     })[0]["Password"]
 
@@ -47,7 +53,7 @@ def verifyPw(username, password):
         return False
 
 def countTokens(username):
-    tokens = users.find({
+    tokens = users.find_one({
         "Username":username
     })[0]["Tokens"]
     return tokens
@@ -79,7 +85,7 @@ class Store(Resource):
             return jsonify(retJson)
 
         #Step 5 store the sentence, take one token away  and return 200OK
-        users.update({
+        users.update_one({
             "Username":username
         }, {
             "$set":{
@@ -117,7 +123,7 @@ class Get(Resource):
             return jsonify(retJson)
 
         #MAKE THE USER PAY!
-        users.update({
+        users.update_one({
             "Username":username
         }, {
             "$set":{
@@ -127,7 +133,7 @@ class Get(Resource):
 
 
 
-        sentence = users.find({
+        sentence = users.find_one({
             "Username": username
         })[0]["Sentence"]
         retJson = {
