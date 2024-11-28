@@ -43,19 +43,18 @@ class Register(Resource):
         return jsonify(retJson)
 
 def verifyPw(username, password):
-    hashed_pw = users.find_one({
-        "Username":username
-    })[0]["Password"]
+    user = users.find_one({"Username": username})  # Finde den Benutzer
 
-    if bcrypt.hashpw(password.encode('utf8'), hashed_pw) == hashed_pw:
-        return True
-    else:
-        return False
+    if user is None:
+        return False  # Benutzer nicht gefunden
+
+    hashed_pw = user["Password"]  # Greife direkt auf das Passwort zu
+    return bcrypt.checkpw(password.encode('utf8'), hashed_pw)  # Überprüfe das Passwort
 
 def countTokens(username):
     tokens = users.find_one({
         "Username":username
-    })[0]["Tokens"]
+    })["Tokens"]
     return tokens
 
 class Store(Resource):
@@ -135,7 +134,7 @@ class Get(Resource):
 
         sentence = users.find_one({
             "Username": username
-        })[0]["Sentence"]
+        })["Sentence"]
         retJson = {
             "status":200,
             "sentence": str(sentence)
